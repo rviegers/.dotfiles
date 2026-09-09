@@ -49,3 +49,7 @@
 # resize-overlay-duration = 4s 200ms
 
 theme = Gruvbox Material
+# background-opacity = 0.75
+# background-blur = 20
+background-blur = false
+
