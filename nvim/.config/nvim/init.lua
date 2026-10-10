@@ -2,8 +2,13 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' ' 
 
+-- Relative line numbers
 vim.opt.number = false
 vim.opt.relativenumber = false
+
+-- Case insensitive searching
+vim.o.ignorecase = true
+vim.o.smartcase = true
 
 vim.opt.mouse = ""
 
