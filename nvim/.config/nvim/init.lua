@@ -10,6 +10,10 @@ vim.opt.relativenumber = false
 vim.o.ignorecase = true
 vim.o.smartcase = true
 
+-- Sync clipboards
+vim.schedule(function() vim.o.clipboard = 'unamedplus' end)
+
+
 vim.opt.mouse = ""
 
 vim.opt.termguicolors = true
