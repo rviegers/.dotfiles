@@ -21,6 +21,22 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   end,
 })
 
+-- FZF lua (fuzzy finder)
+vim.pack.add({
+    { src = "https://github.com/ibhagwan/fzf-lua" },
+})
+
+-- Color scheme (Rosepine)
+vim.pack.add({
+	{
+		src = "https://github.com/rose-pine/neovim",
+		name = "rose-pine",
+	},
+})
+require("rose-pine").setup()
+vim.cmd("colorscheme rose-pine")
+
+
 vim.opt.mouse = ""
 
 vim.opt.termguicolors = true
