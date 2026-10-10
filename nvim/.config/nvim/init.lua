@@ -26,6 +26,30 @@ vim.pack.add({
     { src = "https://github.com/ibhagwan/fzf-lua" },
 })
 
+require("fzf-lua").setup({
+	keymap = {
+		builtin = {
+			["<C-d>"] = 'preview-page-down',
+			["<C-u>"] = 'preview-page-up',
+		}
+	}
+})
+
+vim.keymap.set('n', '<leader><leader>', '<cmd>FzfLua files<cr>', { desc = 'Find Files'})
+vim.keymap.set('n', '<leader>/', '<cmd>FzfLua live_grep<cr>', { desc = 'Find live grep'}) 
+
+-- Neoscroll
+vim.pack.add({
+	{ src = "https://github.com/karb94/neoscroll.nvim" },
+})
+
+require('neoscroll').setup({
+	hide_cursor = false,
+	stop_eof = true,
+	easing = 'qaudratic',
+	duration_multiplier = 0.30, 
+})
+
 -- Color scheme (Rosepine)
 vim.pack.add({
 	{
