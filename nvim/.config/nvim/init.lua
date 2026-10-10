@@ -3,16 +3,23 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' ' 
 
 -- Relative line numbers
-vim.opt.number = false
-vim.opt.relativenumber = false
+vim.opt.number = true
+vim.opt.relativenumber = true
 
 -- Case insensitive searching
 vim.o.ignorecase = true
 vim.o.smartcase = true
 
 -- Sync clipboards
-vim.schedule(function() vim.o.clipboard = 'unamedplus' end)
+vim.o.clipboard = 'unnamedplus'
 
+-- Highlight yanks
+vim.api.nvim_create_autocmd("TextYankPost", {
+  group = vim.api.nvim_create_augroup("highlight_yank", { clear = true }),
+  callback = function()
+    vim.highlight.on_yank()
+  end,
+})
 
 vim.opt.mouse = ""
 
