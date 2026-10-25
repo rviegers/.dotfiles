@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+    echo "Usage: np [SEARCH]" >&2
+    echo "Pick a repo under ~/repos, optionally starting with a fuzzy search." >&2
+}
+
+if (( $# > 1 )); then
+    usage
+    exit 2
+fi
+
+repo_names=()
+for candidate in "$HOME"/repos/*; do
+    [[ -d "$candidate" ]] || continue
+    candidate_name=${candidate##*/}
+    # These are utility directories in ~/repos, not projects to launch.
+    [[ "$candidate_name" == scripts || "$candidate_name" == skills ]] && continue
+    repo_names+=("$candidate_name")
+done
+
+repo_name=
+if (( $# == 1 )); then
+    for candidate_name in "${repo_names[@]}"; do
+        if [[ "$candidate_name" == "$1" ]]; then
+            repo_name=$candidate_name
+            break
+        fi
+    done
+fi
+
+if [[ -z "$repo_name" ]]; then
+    command -v fzf >/dev/null 2>&1 || {
+        echo "fzf is required to choose a repo. Install fzf or pass an exact repo name." >&2
+        exit 1
+    }
+    repo_name=$(printf '%s\n' "${repo_names[@]}" | fzf --query="${1-}" --select-1 --prompt='repo> ') || exit 0
+fi
+
+repo="$HOME/repos/$repo_name"
+repo=$(cd -- "$repo" && pwd -P)
+
+command -v tmux >/dev/null 2>&1 || {
+    echo "tmux is not installed or not on PATH." >&2
+    exit 1
+}
+
+# Use the first hyphen-delimited part when no other repo shares that prefix;
+# otherwise keep the full repo name so similarly named repos stay distinct.
+short_name=${repo_name%%-*}
+session=$short_name
+for candidate in "$HOME"/repos/*; do
+    [[ -d "$candidate" ]] || continue
+    candidate_name=${candidate##*/}
+    [[ "$candidate_name" == scripts || "$candidate_name" == skills ]] && continue
+    [[ "$candidate_name" == "$repo_name" ]] && continue
+    if [[ "$candidate_name" == "$short_name" || "$candidate_name" == "$short_name-"* ]]; then
+        session=$repo_name
+        break
+    fi
+done
+
+# tmux uses ':' to separate a session from a window in target arguments.
+session=${session//:/_}
+
+if tmux has-session -t "=$session" 2>/dev/null; then
+    exec tmux attach-session -t "=$session"
+fi
+
+tmux new-session -d -s "$session" -n nvim -c "$repo" nvim
+tmux new-window -d -t "=$session" -n codex -c "$repo" codex
+tmux new-window -d -t "=$session" -n shell -c "$repo"
+tmux select-window -t "=$session:nvim"
+exec tmux attach-session -t "=$session"
