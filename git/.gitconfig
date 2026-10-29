@@ -3,3 +3,5 @@
 	email = reinmv@live.com
 [init]
 	defaultBranch = main
+[core]
+	editor = nvim
