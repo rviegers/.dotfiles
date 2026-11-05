@@ -12,6 +12,7 @@ if (( $# > 1 )); then
 fi
 
 repo_names=()
+shopt -s dotglob nullglob
 for candidate in "$HOME"/repos/*; do
     [[ -d "$candidate" ]] || continue
     candidate_name=${candidate##*/}
@@ -50,10 +51,7 @@ command -v tmux >/dev/null 2>&1 || {
 # otherwise keep the full repo name so similarly named repos stay distinct.
 short_name=${repo_name%%-*}
 session=$short_name
-for candidate in "$HOME"/repos/*; do
-    [[ -d "$candidate" ]] || continue
-    candidate_name=${candidate##*/}
-    [[ "$candidate_name" == scripts || "$candidate_name" == skills ]] && continue
+for candidate_name in "${repo_names[@]}"; do
     [[ "$candidate_name" == "$repo_name" ]] && continue
     if [[ "$candidate_name" == "$short_name" || "$candidate_name" == "$short_name-"* ]]; then
         session=$repo_name
@@ -61,10 +59,14 @@ for candidate in "$HOME"/repos/*; do
     fi
 done
 
-# tmux uses ':' to separate a session from a window in target arguments.
+# tmux reserves ':' and '.' in target names.
 session=${session//:/_}
+session=${session//./_}
 
 if tmux has-session -t "=$session" 2>/dev/null; then
+    if [[ -n ${TMUX-} ]]; then
+        exec tmux switch-client -t "=$session"
+    fi
     exec tmux attach-session -t "=$session"
 fi
 
@@ -72,4 +74,7 @@ tmux new-session -d -s "$session" -n nvim -c "$repo" nvim
 tmux new-window -d -t "=$session" -n codex -c "$repo" codex
 tmux new-window -d -t "=$session" -n shell -c "$repo"
 tmux select-window -t "=$session:nvim"
+if [[ -n ${TMUX-} ]]; then
+    exec tmux switch-client -t "=$session"
+fi
 exec tmux attach-session -t "=$session"
