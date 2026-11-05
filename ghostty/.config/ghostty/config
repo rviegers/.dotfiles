@@ -49,6 +49,7 @@
 # resize-overlay-duration = 4s 200ms
 
 theme = Rose Pine Moon
+config-file = ?~/.config/terminal-theme/ghostty.conf
 # background-opacity = 0.95
 # background-blur = true
 gtk-titlebar-hide-when-maximized = true

@@ -62,9 +62,54 @@ vim.pack.add({
 		src = "https://github.com/rose-pine/neovim",
 		name = "rose-pine",
 	},
+	{ src = "https://github.com/rebelot/kanagawa.nvim" },
+	{ src = "https://github.com/AlexvZyl/nordic.nvim" },
+	{ src = "https://github.com/sainnhe/everforest" },
+	{ src = "https://github.com/EdenEast/nightfox.nvim" },
+	{ src = "https://github.com/morhetz/gruvbox" },
 })
 require("rose-pine").setup({ variant = "moon" })
-vim.cmd("colorscheme rose-pine")
+vim.opt.background = 'dark'
+vim.g.everforest_background = 'hard'
+vim.g.gruvbox_contrast_dark = 'hard'
+local theme_file = vim.fn.expand('~/.config/terminal-theme/current')
+local selected
+local function apply_terminal_theme()
+  local name = vim.fn.filereadable(theme_file) == 1 and vim.fn.readfile(theme_file)[1] or 'rose-pine-moon'
+  if name == selected then return end
+  local schemes = {
+    ['rose-pine-moon'] = 'rose-pine-moon',
+    ['rose-pine-main'] = 'rose-pine-main',
+    ['kanagawa-dragon'] = 'kanagawa-dragon',
+    ['nordic'] = 'nordic',
+    ['everforest-dark'] = 'everforest',
+    ['nightfox'] = 'nightfox',
+    ['gruvbox-dark'] = 'gruvbox',
+  }
+  local ok, err = pcall(vim.cmd.colorscheme, schemes[name] or 'rose-pine')
+  if ok then
+    selected = name
+  else
+    vim.notify('Could not apply terminal theme: ' .. tostring(err), vim.log.levels.WARN)
+  end
+end
+apply_terminal_theme()
+
+-- Watch the directory because the switcher replaces the file atomically.
+local theme_dir = vim.fn.fnamemodify(theme_file, ':h')
+vim.fn.mkdir(theme_dir, 'p')
+local theme_watcher = vim.uv.new_fs_event()
+if theme_watcher then
+  local ok = theme_watcher:start(theme_dir, {}, function(err, filename)
+    if not err and (filename == 'current' or filename == nil) then
+      vim.schedule(apply_terminal_theme)
+    end
+  end)
+  if not ok then theme_watcher:close() end
+  vim.api.nvim_create_autocmd('VimLeavePre', { callback = function()
+    if not theme_watcher:is_closing() then theme_watcher:stop(); theme_watcher:close() end
+  end })
+end
 
 -- One status line for all splits
 vim.pack.add({
@@ -73,7 +118,7 @@ vim.pack.add({
 vim.opt.laststatus = 3
 require('lualine').setup({
   options = {
-    theme = 'rose-pine',
+    theme = 'auto',
     globalstatus = true,
     icons_enabled = false,
     section_separators = '',

@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""Select a coordinated terminal theme; generated files are local state."""
+import argparse
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+import tomllib
+
+ROOT = Path(__file__).resolve().parent.parent
+STATE = Path.home() / '.config' / 'terminal-theme'
+THEMES = ROOT / 'themes'
+
+def write(path, contents):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(mode='w', dir=path.parent, delete=False) as f:
+        f.write(contents)
+        temp = f.name
+    os.replace(temp, path)
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', nargs='?', choices=['apply', 'current', 'list'])
+    parser.add_argument('name', nargs='?')
+    args = parser.parse_args()
+    names = sorted(p.stem for p in THEMES.glob('*.toml'))
+    if args.action == 'list':
+        print('\n'.join(names)); return
+    if args.action == 'current':
+        print((STATE / 'current').read_text().strip() if (STATE / 'current').exists() else 'rose-pine-moon'); return
+    if args.action is None or (args.action == 'apply' and args.name is None):
+        try:
+            selected = subprocess.run(['fzf', '--prompt=theme> '], input='\n'.join(names) + '\n', text=True, stdout=subprocess.PIPE)
+        except FileNotFoundError:
+            parser.error('fzf is required for the picker; use theme apply NAME')
+        if selected.returncode: return
+        name = selected.stdout.strip()
+    else:
+        name = args.name
+    if name not in names:
+        parser.error('choose a theme from: ' + ', '.join(names))
+    with (THEMES / (name + '.toml')).open('rb') as f:
+        p = tomllib.load(f)
+    keys = ['base', 'surface', 'highlight', 'text', 'muted', 'accent', 'rose', 'purple', 'red', 'orange', 'yellow', 'green']
+    if any(not re.fullmatch(r'#[0-9a-fA-F]{6}', p.get(k, '')) for k in keys):
+        parser.error('invalid theme palette')
+    tmux = f'''set -g status-style "bg={p['surface']},fg={p['text']}"
+set -g status-left "#[fg={p['green']},bold] #S #[default] "
+set -g status-right "#[fg={p['muted']}] #H "
+set -g window-status-style "bg={p['surface']},fg={p['muted']}"
+set -g window-status-current-style "bg={p['highlight']},fg={p['rose']},bold"
+set -g window-status-activity-style "bg={p['surface']},fg={p['yellow']},bold"
+set -g pane-border-style "fg={p['highlight']}"
+set -g pane-active-border-style "fg={p['accent']}"
+set -g message-style "bg={p['base']},fg={p['text']}"
+'''
+    starship = (ROOT / 'starship/.config/starship.toml').read_text()
+    starship = re.sub(r'^palette = .*$', 'palette = "terminal_theme"', starship, count=1, flags=re.M)
+    mapping = dict(base='base', surface0='surface', text='text', lavender='purple', mauve='purple', red='red', peach='orange', yellow='yellow', green='green', teal='accent', blue='accent', foam='accent')
+    starship += '\n[palettes.terminal_theme]\n' + ''.join(f'{k} = "{p[v]}"\n' for k, v in mapping.items())
+    ghostty = f'theme = {p["ghostty"]}\n'
+    if 'ghostty_background' in p:
+        if not re.fullmatch(r'#[0-9a-fA-F]{6}', p['ghostty_background']):
+            parser.error('invalid Ghostty background')
+        ghostty += f'background = {p["ghostty_background"]}\n'
+    write(STATE / 'ghostty.conf', ghostty)
+    write(STATE / 'tmux.conf', tmux)
+    write(STATE / 'starship.toml', starship)
+    write(STATE / 'current', name + '\n')
+    try:
+        tmux_running = os.environ.get('TMUX') or subprocess.run(
+            ['tmux', 'has-session'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        ).returncode == 0
+        if tmux_running:
+            result = subprocess.run(['tmux', 'source-file', str(STATE / 'tmux.conf')], check=False)
+            if result.returncode: print('Could not reload tmux.', file=sys.stderr)
+    except FileNotFoundError:
+        pass
+    print(f'Applied {name}. Running Neovim instances with the theme watcher update automatically.')
+    print('Reload Ghostty (Ctrl+Shift+,), then restart Yazi. Select the Codex theme separately with /theme.')
+
+if __name__ == '__main__':
+    main()
