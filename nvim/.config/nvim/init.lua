@@ -63,12 +63,37 @@ vim.pack.add({
 		name = "rose-pine",
 	},
 })
-require("rose-pine").setup()
+require("rose-pine").setup({ variant = "moon" })
 vim.cmd("colorscheme rose-pine")
 
+-- One status line for all splits
+vim.pack.add({
+  { src = "https://github.com/nvim-lualine/lualine.nvim" },
+})
+vim.opt.laststatus = 3
+require('lualine').setup({
+  options = {
+    theme = 'rose-pine',
+    globalstatus = true,
+    icons_enabled = false,
+    section_separators = '',
+    component_separators = '│',
+  },
+  sections = {
+    lualine_a = { 'mode' },
+    lualine_b = {},
+    lualine_c = { { 'filename', path = 1 }, 'diagnostics' },
+    lualine_x = { 'filetype' },
+    lualine_y = {},
+    lualine_z = { 'location' },
+  },
+})
+-- Don't show mode in text, since have Lualine now
+vim.opt.showmode = false
+
+vim.opt.cmdheight = 0
 
 vim.opt.mouse = ""
-
 vim.opt.termguicolors = true
 vim.opt.background = "dark"
 

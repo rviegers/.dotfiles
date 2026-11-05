@@ -49,8 +49,7 @@
 # resize-overlay-duration = 4s 200ms
 
 theme = Rose Pine Moon
-background-opacity = 0.85
-background-blur = 60
-background-blur = true
+# background-opacity = 0.95
+# background-blur = true
 gtk-titlebar-hide-when-maximized = true
 
