@@ -21,6 +21,12 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   end,
 })
 
+-- Navigate through nvim splits with ctrl h, j, k, l
+vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move to split below' })
+vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move to split above' })
+vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move to split right' })
+vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move to split left' })
+
 -- FZF lua (fuzzy finder)
 vim.pack.add({
     { src = "https://github.com/ibhagwan/fzf-lua" },
@@ -46,7 +52,7 @@ vim.pack.add({
 require('neoscroll').setup({
 	hide_cursor = false,
 	stop_eof = true,
-	easing = 'qaudratic',
+	easing = 'quadratic',
 	duration_multiplier = 0.30, 
 })
 
