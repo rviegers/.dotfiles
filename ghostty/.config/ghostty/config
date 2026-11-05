@@ -48,8 +48,9 @@
 # # Just for example:
 # resize-overlay-duration = 4s 200ms
 
-theme = Gruvbox Dark
-# background-opacity = 0.75
-# background-blur = 20
-background-blur = false
+theme = Rose Pine Moon
+background-opacity = 0.85
+background-blur = 60
+background-blur = true
 gtk-titlebar-hide-when-maximized = true
+
