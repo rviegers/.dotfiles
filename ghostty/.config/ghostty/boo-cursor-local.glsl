@@ -35,7 +35,8 @@ const float MIN_MOVE_DISTANCE = 0.0;          // Minimum movement to trigger sme
 // === RENDERING PARAMETERS ===
 const float BLUR = 2.0;
 const float DURATION = 0.2;
-const float THRESHOLD_MIN_DISTANCE = 0.0;
+// Ignore short movements such as advancing by one character while typing.
+const float THRESHOLD_MIN_DISTANCE = 0.75; // In cursor heights.
 
 // Original warp trail parameters (fallback)
 const float TRAIL_THICKNESS = 1.0;
@@ -174,6 +175,11 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
     #if !defined(WEB)
     fragColor = texture(iChannel0, fragCoord.xy / iResolution.xy);
     #endif
+
+    // Neovim normally uses a bar cursor in insert mode.
+    if (iCurrentCursorStyle == CURSORSTYLE_BAR) {
+        return;
+    }
 
     // normalization & setup (-1, 1 coords)
     vec2 vu = normalize(fragCoord, 1.);
