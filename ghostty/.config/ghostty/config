@@ -53,4 +53,4 @@ config-file = ?~/.config/terminal-theme/ghostty.conf
 # background-opacity = 0.95
 # background-blur = true
 gtk-titlebar-hide-when-maximized = true
-
+custom-shader = shaders/boo-cursor.glsl
