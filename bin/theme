@@ -55,7 +55,24 @@ set -g window-status-activity-style "bg={p['surface']},fg={p['yellow']},bold"
 set -g pane-border-style "fg={p['highlight']}"
 set -g pane-active-border-style "fg={p['accent']}"
 set -g message-style "bg={p['base']},fg={p['text']}"
+set -g @workmux_popup_bg "{p['surface']}"
+set -g @workmux_popup_fg "{p['text']}"
+set -g @workmux_popup_border "{p['accent']}"
 '''
+    workmux_path = ROOT / 'workmux/.config/workmux/config.yaml'
+    workmux = workmux_path.read_text()
+    fields = dict(current_row_bg='base', highlight_row_bg='highlight',
+                  current_worktree_fg='rose', dimmed='muted', text='text',
+                  border='muted', help_border='muted', help_muted='muted',
+                  header='purple', keycap='rose', info='accent', success='green',
+                  warning='yellow', danger='red', accent='accent')
+    section = '# BEGIN terminal-theme (managed by the theme command)\ntheme:\n  mode: dark\n  custom:\n'
+    section += ''.join(f'    {key}: "{p[value]}"\n' for key, value in fields.items())
+    section += '# END terminal-theme'
+    workmux, count = re.subn(r'(?ms)^# BEGIN terminal-theme.*?^# END terminal-theme',
+                            lambda _: section, workmux)
+    if count != 1:
+        parser.error('expected one managed terminal-theme section in workmux config')
     starship = (ROOT / 'starship/.config/starship.toml').read_text()
     starship = re.sub(r'^palette = .*$', 'palette = "terminal_theme"', starship, count=1, flags=re.M)
     mapping = dict(base='base', surface0='surface', text='text', lavender='purple', mauve='purple', red='red', peach='orange', yellow='yellow', green='green', teal='accent', blue='accent', foam='accent')
@@ -69,6 +86,8 @@ set -g message-style "bg={p['base']},fg={p['text']}"
     write(STATE / 'tmux.conf', tmux)
     write(STATE / 'starship.toml', starship)
     write(STATE / 'current', name + '\n')
+    if workmux != workmux_path.read_text():
+        write(workmux_path, workmux)
     try:
         tmux_running = os.environ.get('TMUX') or subprocess.run(
             ['tmux', 'has-session'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
