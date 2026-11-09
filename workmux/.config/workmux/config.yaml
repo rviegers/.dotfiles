@@ -1,0 +1,13 @@
+nerdfont: true
+mode: session
+windows:
+  - name: nvim
+    panes:
+      - command: nvim
+        focus: true
+  - name: codex
+    panes:
+      - command: codex --no-daemon
+  - name: bash
+    panes:
+      - command: bash

@@ -71,7 +71,7 @@ if tmux has-session -t "=$session" 2>/dev/null; then
 fi
 
 tmux new-session -d -s "$session" -n nvim -c "$repo" nvim
-tmux new-window -d -t "=$session" -n codex -c "$repo" codex
+tmux new-window -d -t "=$session" -n codex -c "$repo" codex --no-daemon
 tmux new-window -d -t "=$session" -n shell -c "$repo"
 tmux select-window -t "=$session:nvim"
 if [[ -n ${TMUX-} ]]; then
