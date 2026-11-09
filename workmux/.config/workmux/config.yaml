@@ -1,5 +1,25 @@
 nerdfont: true
 mode: session
+# BEGIN terminal-theme (managed by the theme command)
+theme:
+  mode: dark
+  custom:
+    current_row_bg: "#393552"
+    highlight_row_bg: "#44415a"
+    current_worktree_fg: "#ebbcba"
+    dimmed: "#908caa"
+    text: "#e0def4"
+    border: "#908caa"
+    help_border: "#908caa"
+    help_muted: "#908caa"
+    header: "#c4a7e7"
+    keycap: "#ebbcba"
+    info: "#9ccfd8"
+    success: "#3e8fb0"
+    warning: "#f6c177"
+    danger: "#eb6f92"
+    accent: "#9ccfd8"
+# END terminal-theme
 windows:
   - name: nvim
     panes:
