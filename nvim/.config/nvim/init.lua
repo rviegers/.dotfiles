@@ -33,6 +33,9 @@ vim.pack.add({
 })
 
 require("fzf-lua").setup({
+	files = {
+		no_ignore = true,
+	},
 	keymap = {
 		builtin = {
 			["<C-d>"] = 'preview-page-down',
