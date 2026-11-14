@@ -10,11 +10,17 @@ usage() {
 # the preview can be refreshed without starting another interactive picker.
 if [[ ${1-} == --preview ]]; then
     if [[ ${2-} == session ]]; then
-        tmux list-windows -t "$3" -F '#{window_index}: #{window_name}#{?window_active, (active),}' 2>/dev/null || exit 0
-        printf '\n'
+        tmux display-message -p -t "$3" '  SESSION  #{session_name}
+  Path     #{pane_current_path}' 2>/dev/null || exit 0
+        printf '\n  WINDOWS\n'
+        tmux list-windows -t "$3" -F '  #{window_index}  #{window_name}#{?window_active,  • active,}' 2>/dev/null || true
+        printf '\n  TERMINAL PREVIEW\n\n'
         tmux capture-pane -p -e -t "$3" -S -80 2>/dev/null || true
     elif [[ ${2-} == project ]]; then
-        printf '%s\n\n' "$3"
+        printf '  PROJECT  %s\n  Path     %s\n' "${3##*/}" "$3"
+        branch=$(git -C "$3" symbolic-ref --quiet --short HEAD 2>/dev/null || git -C "$3" rev-parse --short HEAD 2>/dev/null || true)
+        [[ -z "$branch" ]] || printf '  Branch   %s\n' "$branch"
+        printf '\n  FILES\n\n'
         ls -la -- "$3" 2>/dev/null || true
     fi
     exit 0
@@ -56,18 +62,44 @@ if [[ -z "$repo_name" ]]; then
     }
     script_path=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)/$(basename -- "${BASH_SOURCE[0]}")
     export NP_PREVIEW_SCRIPT="$script_path"
+    # Read the same palette selected by the theme command, including before
+    # the theme has been applied for the first time.
+    palette_root=$(dirname -- "$(dirname -- "$(readlink -f -- "$script_path")")")/themes
+    theme_name=rose-pine-moon
+    if [[ -r "$HOME/.config/terminal-theme/current" ]]; then
+        IFS= read -r theme_name < "$HOME/.config/terminal-theme/current" || true
+    fi
+    colors=$(python3 -c '
+import pathlib, re, sys, tomllib
+name = sys.argv[2]
+if not re.fullmatch(r"[a-zA-Z0-9_-]+", name):
+    raise SystemExit(1)
+with (pathlib.Path(sys.argv[1]) / (name + ".toml")).open("rb") as f:
+    p = tomllib.load(f)
+fields = {"bg":"base", "bg+":"highlight", "fg":"text", "fg+":"text", "border":"muted", "label":"purple", "prompt":"accent", "pointer":"accent", "hl":"rose", "hl+":"rose", "header":"muted", "info":"muted"}
+if any(not re.fullmatch(r"#[0-9a-fA-F]{6}", p.get(v, "")) for v in fields.values()):
+    raise SystemExit(1)
+print(",".join(f"{k}:{p[v]}" for k, v in fields.items()))
+' "$palette_root" "$theme_name" 2>/dev/null || true)
+    color_options=()
+    [[ -z "$colors" ]] || color_options+=("--color=$colors")
     query=${1-}
     while :; do
         # IDs are used as targets so similarly named sessions cannot be confused.
         selection=$(
             {
-                tmux list-sessions -F $'session\t#{session_id}\tSESSION  #{session_name}  (#{session_windows} windows)' 2>/dev/null || true
+                printf 'heading\t-\tSessions\n'
+                tmux list-sessions -F $'session\t#{session_id}\t  #{session_name}   (#{session_windows} windows)' 2>/dev/null || true
+                printf 'heading\t-\t \nheading\t-\tRepos\n'
                 for candidate_name in "${repo_names[@]}"; do
-                    printf 'project\t%s\tPROJECT  %s\n' "$HOME/repos/$candidate_name" "$candidate_name"
+                    printf 'project\t%s\t  %s\n' "$HOME/repos/$candidate_name" "$candidate_name"
                 done
             } | fzf --delimiter=$'\t' --with-nth=3 --no-sort --ansi \
+                "${color_options[@]}" --layout=reverse --border=rounded \
+                --border-label=' Workspaces ' --preview-label=' Details ' \
+                --pointer='❯' --prompt='  Search  ' \
                 --query="$query" --print-query --expect=ctrl-d \
-                --prompt='workspace> ' --header='Enter: open  |  Ctrl-D: kill session' \
+                --header='Enter open   ·   Ctrl-D kill session   ·   Esc close' \
                 --preview '"$NP_PREVIEW_SCRIPT" --preview {1} {2}' \
                 --preview-window='right,55%,wrap'
         ) || exit 0
@@ -77,9 +109,10 @@ if [[ -z "$repo_name" ]]; then
         row=${selection#*$'\n'}
         [[ "$row" != "$selection" && -n "$row" ]] || continue
         IFS=$'\t' read -r kind target label <<< "$row"
+        [[ "$kind" != heading ]] || continue
         if [[ "$key" == ctrl-d ]]; then
             if [[ "$kind" == session ]]; then
-                printf 'Kill %s and all its windows? [y/N] ' "${label#SESSION  }" > /dev/tty
+                printf 'Kill %s and all its windows? [y/N] ' "$label" > /dev/tty
                 read -r answer < /dev/tty || exit 0
                 if [[ "$answer" == y || "$answer" == Y ]]; then
                     tmux kill-session -t "$target" || true
