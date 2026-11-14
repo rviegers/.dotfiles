@@ -36,8 +36,8 @@ shopt -s dotglob nullglob
 for candidate in "$HOME"/repos/*; do
     [[ -d "$candidate" ]] || continue
     candidate_name=${candidate##*/}
-    # These are utility directories in ~/repos, not projects to launch.
-    [[ "$candidate_name" == scripts || "$candidate_name" == skills ]] && continue
+    # These are utility or workmux worktree directories, not projects to launch.
+    [[ "$candidate_name" == scripts || "$candidate_name" == skills || "$candidate_name" == *__worktrees ]] && continue
     repo_names+=("$candidate_name")
 done
 
