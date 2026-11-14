@@ -3,8 +3,22 @@ set -euo pipefail
 
 usage() {
     echo "Usage: np [SEARCH]" >&2
-    echo "Pick a repo under ~/repos, optionally starting with a fuzzy search." >&2
+    echo "Pick a tmux session or repo under ~/repos. Ctrl-D kills a selected session." >&2
 }
+
+# Invoked by fzf for the selected row. Keep this separate from the picker so
+# the preview can be refreshed without starting another interactive picker.
+if [[ ${1-} == --preview ]]; then
+    if [[ ${2-} == session ]]; then
+        tmux list-windows -t "$3" -F '#{window_index}: #{window_name}#{?window_active, (active),}' 2>/dev/null || exit 0
+        printf '\n'
+        tmux capture-pane -p -e -t "$3" -S -80 2>/dev/null || true
+    elif [[ ${2-} == project ]]; then
+        printf '%s\n\n' "$3"
+        ls -la -- "$3" 2>/dev/null || true
+    fi
+    exit 0
+fi
 
 if (( $# > 1 )); then
     usage
@@ -36,7 +50,52 @@ if [[ -z "$repo_name" ]]; then
         echo "fzf is required to choose a repo. Install fzf or pass an exact repo name." >&2
         exit 1
     }
-    repo_name=$(printf '%s\n' "${repo_names[@]}" | fzf --query="${1-}" --select-1 --prompt='repo> ') || exit 0
+    command -v tmux >/dev/null 2>&1 || {
+        echo "tmux is not installed or not on PATH." >&2
+        exit 1
+    }
+    script_path=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)/$(basename -- "${BASH_SOURCE[0]}")
+    export NP_PREVIEW_SCRIPT="$script_path"
+    query=${1-}
+    while :; do
+        # IDs are used as targets so similarly named sessions cannot be confused.
+        selection=$(
+            {
+                tmux list-sessions -F $'session\t#{session_id}\tSESSION  #{session_name}  (#{session_windows} windows)' 2>/dev/null || true
+                for candidate_name in "${repo_names[@]}"; do
+                    printf 'project\t%s\tPROJECT  %s\n' "$HOME/repos/$candidate_name" "$candidate_name"
+                done
+            } | fzf --delimiter=$'\t' --with-nth=3 --no-sort --ansi \
+                --query="$query" --print-query --expect=ctrl-d \
+                --prompt='workspace> ' --header='Enter: open  |  Ctrl-D: kill session' \
+                --preview '"$NP_PREVIEW_SCRIPT" --preview {1} {2}' \
+                --preview-window='right,55%,wrap'
+        ) || exit 0
+        query=${selection%%$'\n'*}
+        selection=${selection#*$'\n'}
+        key=${selection%%$'\n'*}
+        row=${selection#*$'\n'}
+        [[ "$row" != "$selection" && -n "$row" ]] || continue
+        IFS=$'\t' read -r kind target label <<< "$row"
+        if [[ "$key" == ctrl-d ]]; then
+            if [[ "$kind" == session ]]; then
+                printf 'Kill %s and all its windows? [y/N] ' "${label#SESSION  }" > /dev/tty
+                read -r answer < /dev/tty || exit 0
+                if [[ "$answer" == y || "$answer" == Y ]]; then
+                    tmux kill-session -t "$target" || true
+                fi
+            fi
+            continue
+        fi
+        if [[ "$kind" == session ]]; then
+            if [[ -n ${TMUX-} ]]; then
+                exec tmux switch-client -t "$target"
+            fi
+            exec tmux attach-session -t "$target"
+        fi
+        repo_name=${target##*/}
+        break
+    done
 fi
 
 repo="$HOME/repos/$repo_name"
