@@ -112,11 +112,7 @@ print(",".join(f"{k}:{p[v]}" for k, v in fields.items()))
         [[ "$kind" != heading ]] || continue
         if [[ "$key" == ctrl-d ]]; then
             if [[ "$kind" == session ]]; then
-                printf 'Kill %s and all its windows? [y/N] ' "$label" > /dev/tty
-                read -r answer < /dev/tty || exit 0
-                if [[ "$answer" == y || "$answer" == Y ]]; then
-                    tmux kill-session -t "$target" || true
-                fi
+                tmux kill-session -t "$target" || true
             fi
             continue
         fi
