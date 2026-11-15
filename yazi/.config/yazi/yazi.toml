@@ -1,0 +1,9 @@
+[opener]
+sioyek = [
+    { run = 'env QT_QPA_PLATFORM=xcb /home/reinmv/AppImages/sioyek.appimage %s', orphan = true, desc = "Sioyek", for = "linux" }
+]
+
+[open]
+prepend_rules = [
+    { mime = "application/pdf", use = "sioyek" }
+]
