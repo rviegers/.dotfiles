@@ -4,21 +4,21 @@ mode: session
 theme:
   mode: dark
   custom:
-    current_row_bg: "#2e383c"
-    highlight_row_bg: "#414b50"
-    current_worktree_fg: "#d3c6aa"
-    dimmed: "#859289"
-    text: "#d3c6aa"
-    border: "#859289"
-    help_border: "#859289"
-    help_muted: "#859289"
-    header: "#d699b6"
-    keycap: "#d3c6aa"
-    info: "#83c092"
-    success: "#a7c080"
-    warning: "#dbbc7f"
-    danger: "#e67e80"
-    accent: "#83c092"
+    current_row_bg: "#2e3440"
+    highlight_row_bg: "#3b4252"
+    current_worktree_fg: "#d8dee9"
+    dimmed: "#8892a6"
+    text: "#d8dee9"
+    border: "#8892a6"
+    help_border: "#8892a6"
+    help_muted: "#8892a6"
+    header: "#b48ead"
+    keycap: "#d8dee9"
+    info: "#88c0d0"
+    success: "#a3be8c"
+    warning: "#ebcb8b"
+    danger: "#bf616a"
+    accent: "#88c0d0"
 # END terminal-theme
 windows:
   - name: nvim
