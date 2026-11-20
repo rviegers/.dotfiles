@@ -154,3 +154,29 @@ vim.api.nvim_create_autocmd({ "InsertLeave", "FocusLost" }, {
   end,
 })
 
+
+-- Replace the existing Tinymist block in init.lua with this block.
+vim.pack.add({
+  { src = 'https://github.com/Saghen/blink.cmp', version = 'v1.10.2' },
+})
+
+require('blink.cmp').setup({
+  keymap = {
+    preset = 'default',
+
+	['<CR>'] = { 'accept', 'fallback' },
+    ['<C-j>'] = { 'select_next', 'fallback' },
+    ['<C-k>'] = { 'select_prev', 'fallback' },
+  },
+  completion = {
+    list = { selection = { preselect = false, auto_insert = false } },
+  },
+  fuzzy = { implementation = 'lua' },
+})
+
+vim.lsp.config('tinymist', {
+  cmd = { 'tinymist' },
+  filetypes = { 'typst' },
+  capabilities = require('blink.cmp').get_lsp_capabilities(),
+})
+vim.lsp.enable('tinymist')
