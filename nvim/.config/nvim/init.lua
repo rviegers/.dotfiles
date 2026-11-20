@@ -47,6 +47,16 @@ require("fzf-lua").setup({
 vim.keymap.set('n', '<leader><leader>', '<cmd>FzfLua files<cr>', { desc = 'Find Files'})
 vim.keymap.set('n', '<leader>/', '<cmd>FzfLua live_grep<cr>', { desc = 'Find live grep'}) 
 
+-- Markdown preview
+vim.api.nvim_create_autocmd('PackChanged', {
+  callback = function(event)
+    if event.data.spec.name == 'markdown-preview.nvim' and (event.data.kind == 'install' or event.data.kind == 'update') then
+      vim.fn['mkdp#util#install_sync']()
+    end
+  end,
+})
+vim.pack.add({ { src = 'https://github.com/iamcco/markdown-preview.nvim' } })
+
 -- Neoscroll
 vim.pack.add({
 	{ src = "https://github.com/karb94/neoscroll.nvim" },
