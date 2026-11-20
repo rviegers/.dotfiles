@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+shopt -s dotglob nullglob
+for path in "$HOME"/repos/*; do
+    [[ -d "$path" ]] || continue
+    name=${path##*/}
+    [[ "$name" == scripts || "$name" == skills || "$name" == *__worktrees ]] && continue
+    printf '%s\n' "$path"
+done

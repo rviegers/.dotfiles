@@ -1,0 +1,25 @@
+sort_order = ["tmux", "zoxide"]
+
+[tui]
+prompt = "Search  "
+pointer = "❯"
+placeholder = "Search sessions and repos..."
+show_windows = true
+group_separator = true
+preview = true
+preview_width = 55
+
+[frecency]
+list_command = "sesh-repos"
+
+[[wildcard]]
+pattern = "~/repos/*"
+startup_command = "nvim"
+windows = ["codex", "shell"]
+
+[[window]]
+name = "codex"
+startup_script = "codex --no-daemon"
+
+[[window]]
+name = "shell"

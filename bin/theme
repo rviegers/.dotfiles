@@ -46,6 +46,11 @@ def main():
     keys = ['base', 'surface', 'highlight', 'text', 'muted', 'accent', 'rose', 'purple', 'red', 'orange', 'yellow', 'green']
     if any(not re.fullmatch(r'#[0-9a-fA-F]{6}', p.get(k, '')) for k in keys):
         parser.error('invalid theme palette')
+    # Lift the terminal background slightly to distinguish the sesh popup.
+    popup_bg = '#' + ''.join(
+        f'{round(int(p["base"][i:i+2], 16) * .92 + int(p["text"][i:i+2], 16) * .08):02x}'
+        for i in (1, 3, 5)
+    )
     tmux = f'''set -g status-style "bg={p['surface']},fg={p['text']}"
 set -g status-left "#[fg={p['green']},bold] #S #[default] "
 set -g status-right "#[fg={p['muted']}] #H "
@@ -58,6 +63,9 @@ set -g message-style "bg={p['base']},fg={p['text']}"
 set -g @workmux_popup_bg "{p['surface']}"
 set -g @workmux_popup_fg "{p['text']}"
 set -g @workmux_popup_border "{p['accent']}"
+set -g @sesh_popup_bg "{popup_bg}"
+set -g popup-style "bg={popup_bg},fg={p['text']}"
+set -g popup-border-style "bg={popup_bg},fg={p['accent']}"
 '''
     workmux_path = ROOT / 'workmux/.config/workmux/config.yaml'
     workmux = workmux_path.read_text()
